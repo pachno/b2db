@@ -1,0 +1,26 @@
+{
+    "name" : "pachno/b2db",
+    "description" : "B2DB is a lightweight ORM for modern PHP applications",
+    "keywords" : [
+        "ORM", "Database", "db", "MariaDB", "MySQL", "Postgres"
+    ],
+    "authors" : [{
+            "name" : "Daniel Andre Eikeland",
+            "email" : "zegenie@gmail.com"
+        }
+    ],
+    "license" : [
+        "MPL-2.0"
+    ],
+    "require" : {
+        "php" : ">=7.3.0",
+        "ext-Reflection" : "*",
+        "ext-mbstring" : "*",
+        "ext-pdo" : "*"
+    },
+    "autoload" : {
+        "psr-4" : {
+            "b2db\\" : "src/"
+        }
+    }
+}
