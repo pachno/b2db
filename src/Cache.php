@@ -2,29 +2,41 @@
 
     namespace b2db;
 
+    use DirectoryIterator;
+
     /**
      * Cache class
      *
      * @package b2db
-     * @subpackage core
      */
     class Cache implements interfaces\Cache
     {
 
-        const TYPE_DUMMY = 0;
-        const TYPE_APC = 1;
-        const TYPE_FILE = 2;
+        public const TYPE_DUMMY = 0;
+        public const TYPE_APC = 1;
+        public const TYPE_FILE = 2;
 
         /**
          * @var bool
          */
         protected $enabled = true;
 
-        protected $type;
+        /**
+         * @var int
+         */
+        protected int $type;
 
-        protected $path;
+        /**
+         * @var string
+         */
+        protected string $path;
 
-        public function __construct($type, $options = [])
+        /**
+         * Creates an instance of the cache class
+         * @param int $type Which type of cache to use
+         * @param array<string, bool|string> $options
+         */
+        public function __construct(int $type, ?array $options = [])
         {
             $this->type = $type;
 
@@ -41,10 +53,7 @@
             }
         }
 
-        /**
-         * @return string
-         */
-        public function getCacheTypeDescription()
+        public function getCacheTypeDescription(): string
         {
             switch ($this->type) {
                 case self::TYPE_DUMMY:
@@ -61,20 +70,21 @@
         /**
          * @return int
          */
-        public function getType()
+        public function getType(): int
         {
             return $this->type;
         }
 
         /**
          * @param string $key The cache key to look up
-         *
-         * @param null $default_value
+         * @param mixed $default_value
          * @return mixed
          */
-        public function get($key, $default_value = null)
+        public function get(string $key, $default_value = null)
         {
-            if (!$this->enabled) return $default_value;
+            if (!$this->enabled) {
+                return $default_value;
+            }
 
             switch ($this->type) {
                 case self::TYPE_APC:
@@ -84,10 +94,12 @@
                     return ($success) ? $var : $default_value;
                 case self::TYPE_FILE:
                     $filename = $this->path . $key . '.cache';
-                    if (!file_exists($filename)) return $default_value;
+                    if (!file_exists($filename)) {
+                        return $default_value;
+                    }
 
-                    $value = unserialize(file_get_contents($filename));
-                    return $value;
+                    /** @noinspection UnserializeExploitsInspection */
+                    return unserialize(file_get_contents($filename));
                 case self::TYPE_DUMMY:
                 default:
                     return $default_value;
@@ -99,9 +111,11 @@
          *
          * @return bool
          */
-        public function has($key)
+        public function has(string $key): bool
         {
-            if (!$this->enabled) return false;
+            if (!$this->enabled) {
+                return false;
+            }
 
             switch ($this->type) {
                 case self::TYPE_APC:
@@ -128,10 +142,10 @@
          *
          * @return bool
          */
-        public function set($key, $value)
+        public function set(string $key, $value): bool
         {
             if (!$this->enabled) {
-                return false;
+                return true;
             }
 
             switch ($this->type) {
@@ -153,9 +167,11 @@
          *
          * @param string $key The cache key to delete
          */
-        public function delete($key)
+        public function delete(string $key): bool
         {
-            if (!$this->enabled) return;
+            if (!$this->enabled) {
+                return true;
+            }
 
             switch ($this->type) {
                 case self::TYPE_APC:
@@ -165,6 +181,8 @@
                     $filename = $this->path . $key . '.cache';
                     unlink($filename);
             }
+
+            return true;
         }
 
         /**
@@ -172,7 +190,7 @@
          *
          * @param bool $value
          */
-        public function setEnabled($value)
+        public function setEnabled(bool $value): void
         {
             $this->enabled = $value;
         }
@@ -180,7 +198,7 @@
         /**
          * Temporarily disable the cache
          */
-        public function disable()
+        public function disable(): void
         {
             $this->setEnabled(false);
         }
@@ -188,7 +206,7 @@
         /**
          * (Re-)enable the cache
          */
-        public function enable()
+        public function enable(): void
         {
             $this->setEnabled(true);
         }
@@ -196,21 +214,22 @@
         /**
          * Flush all entries in the cache
          */
-        public function flush()
+        public function flush(): bool
         {
-            if (!$this->enabled) return;
-
-            switch ($this->type) {
-                case self::TYPE_FILE:
-                    $iterator = new \DirectoryIterator($this->path);
-                    foreach ($iterator as $file_info)
-                    {
-                        if (!$file_info->isDir())
-                        {
-                            unlink($file_info->getPathname());
-                        }
-                    }
+            if (!$this->enabled) {
+                return false;
             }
+
+            if ($this->type === self::TYPE_FILE) {
+                $iterator = new DirectoryIterator($this->path);
+                foreach ($iterator as $file_info) {
+                    if (!$file_info->isDir()) {
+                        unlink($file_info->getPathname());
+                    }
+                }
+            }
+
+            return true;
         }
 
     }

@@ -3,100 +3,77 @@
     namespace b2db;
 
     use b2db\interfaces\QueryInterface;
-
-    /**
-     * Resultset class
-     *
-     * @author Daniel Andre Eikeland <zegenie@zegeniestudios.net>
-     * @version 2.0
-     * @license http://www.opensource.org/licenses/mozilla1.1.php Mozilla Public License 1.1 (MPL 1.1)
-     * @package b2db
-     * @subpackage core
-     */
+    use Countable;
 
     /**
      * Resultset class
      *
      * @package b2db
-     * @subpackage core
      */
-    class Resultset implements \Countable
+    class Resultset implements Countable
     {
 
         /**
          * @var Row[]
          */
-        protected $rows = [];
+        protected array $rows = [];
 
         /**
          * @var QueryInterface
          */
-        protected $query;
+        protected QueryInterface $query;
 
-        protected $int_ptr;
+        protected int $current_pointer;
 
-        protected $max_ptr;
+        protected int $max_pointer;
 
-        protected $insert_id;
+        protected int $last_insert_id;
 
-        protected $id_col;
+        protected string $id_column;
 
         public function __construct(Statement $statement)
         {
-            try {
-                $this->query = $statement->getQuery();
+            $this->query = $statement->getQuery();
 
-                if ($this->query instanceof QueryInterface) {
-                    if ($this->query->isInsert()) {
-                        $this->insert_id = $statement->getInsertID();
-                    } elseif ($this->query->isSelect()) {
-                        while ($row = $statement->fetch()) {
-                            $this->rows[] = new Row($row, $statement);
-                        }
-                        $this->max_ptr = count($this->rows);
-                        $this->int_ptr = 0;
-                    } elseif ($this->query->isCount()) {
-                        $value = $statement->fetch();
-                        $this->max_ptr = $value['num_col'] ?? 0;
+            if ($this->query instanceof QueryInterface) {
+                if ($this->query->isInsert()) {
+                    $this->last_insert_id = $statement->getInsertID();
+                } elseif ($this->query->isSelect()) {
+                    while ($row = $statement->fetch()) {
+                        $this->rows[] = new Row($row, $statement);
                     }
+                    $this->max_pointer = count($this->rows);
+                    $this->current_pointer = 0;
+                } elseif ($this->query->isCount()) {
+                    $value = $statement->fetch();
+                    $this->max_pointer = $value['num_col'] ?? 0;
                 }
-            } catch (\Exception $e) {
-                throw $e;
             }
         }
 
-        /**
-         * @return bool
-         */
-        protected function _next()
+        protected function _next(): bool
         {
-            if ($this->int_ptr == $this->max_ptr) {
+            if ($this->current_pointer === $this->max_pointer) {
                 return false;
-            } else {
-                $this->int_ptr++;
-                return true;
             }
+
+            $this->current_pointer++;
+            return true;
         }
 
-        /**
-         * @return int
-         */
-        public function getCount()
+        public function getCount(): int
         {
-            return $this->max_ptr;
+            return $this->max_pointer;
         }
 
         /**
          * Returns the current row
          *
-         * @return Row
+         * @return ?Row
          */
-        public function getCurrentRow()
+        public function getCurrentRow(): ?Row
         {
-            if (isset($this->rows[($this->int_ptr - 1)])) {
-                return $this->rows[($this->int_ptr - 1)];
-            }
-            return null;
+            return $this->rows[($this->current_pointer - 1)] ?? null;
         }
 
         /**
@@ -118,30 +95,40 @@
             }
         }
 
-        public function get($column, $foreign_key = null)
+        /**
+         * @return mixed|null
+         */
+        public function get(string $column, string $foreign_key = null)
         {
             $row = $this->getCurrentRow();
-            if ($row instanceof Row) {
-                return $row->get($column, $foreign_key);
-            } else {
-                throw new \Exception("Cannot return value of {$column} on a row that doesn't exist");
+            if (!$row instanceof Row) {
+                throw new \Exception("Cannot return value of $column on a row that doesn't exist");
             }
+
+            return $row->get($column, $foreign_key);
         }
 
         /**
          * @return Row[]
          */
-        public function getAllRows()
+        public function getAllRows(): array
         {
             return $this->rows;
         }
 
-        public function getSQL()
+        public function getSQL(): string
         {
             return ($this->query instanceof Criteria) ? $this->query->getSQL() : '';
         }
 
-        public function printSQL()
+        /**
+         * Return a printable version of the sql string with variables substituted where possible
+         * instead of placeholders
+         *
+         * @return string
+         * @noinspection PhpUnused
+         */
+        public function printSQL(): string
         {
             $str = '';
             if ($this->query instanceof Criteria) {
@@ -156,56 +143,48 @@
             return $str;
         }
 
-        public function getInsertID()
+        public function getInsertID(): ?int
         {
-            return $this->insert_id;
+            return $this->last_insert_id ?? null;
         }
 
-        public function rewind()
+        public function rewind(): void
         {
-            $this->int_ptr = 0;
+            $this->current_pointer = 0;
         }
 
-        /**
-         * @return Row
-         */
-        public function current()
+        public function current(): ?Row
         {
-            $row = $this->getCurrentRow();
-
-            return $row;
+            return $this->getCurrentRow();
         }
 
-        public function key()
+        public function key(): ?string
         {
-            if ($this->id_col === null)
-                $this->id_col = $this->query->getTable()->getIdColumn();
+            if (!isset($this->id_column)) {
+                $this->id_column = $this->query->getTable()->getIdColumn();
+            }
 
             $row = $this->getCurrentRow();
 
-            return ($row instanceof Row) ? $row->get($this->id_col) : null;
+            return ($row instanceof Row) ? $row->get($this->id_column) : null;
         }
 
-        public function next()
+        public function next(): void
         {
             $this->_next();
         }
 
-        public function valid()
+        public function valid(): bool
         {
-            $val = (boolean) $this->int_ptr < $this->max_ptr;
-            return $val;
+            return (bool) $this->current_pointer < $this->max_pointer;
         }
 
-        public function count()
+        public function count(): int
         {
-            return (integer) $this->max_ptr;
+            return $this->max_pointer;
         }
 
-        /**
-         * @return Query
-         */
-        public function getQuery()
+        public function getQuery(): QueryInterface
         {
             return $this->query;
         }

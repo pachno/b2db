@@ -6,44 +6,37 @@
      * Criterion class
      *
      * @package b2db
-     * @subpackage core
      */
     class ForeignTable
     {
 
-        protected $column;
+        protected string $column;
 
         /**
          * @var Table
          */
-        protected $table;
+        protected Table $table;
 
-        protected $key;
+        protected string $key;
 
         /**
          * @param Table $table
-         * @param $key
-         * @param $column
+         * @param string $key
+         * @param string $column
          */
-        public function __construct(Table $table, $key, $column)
+        public function __construct(Table $table, string $key, string $column)
         {
             $this->table = $table;
             $this->key = $key;
             $this->column = $column;
         }
 
-        /**
-         * @return string
-         */
-        public function getColumn()
+        public function getColumn(): string
         {
             return $this->column;
         }
 
-        /**
-         * @return string
-         */
-        public function getKey()
+        public function getKey(): string
         {
             return $this->key;
         }
@@ -51,17 +44,17 @@
         /**
          * @return Table
          */
-        public function getTable()
+        public function getTable(): Table
         {
             return $this->table;
         }
 
-        public function getKeyColumnName()
+        public function getKeyColumnName(): string
         {
-            return $this->table->getB2DBAlias() . '.' . Table::getColumnName($this->key);
+            return $this->table->getB2dbAlias() . '.' . Table::getColumnName($this->key);
         }
 
-        public function getColumnName()
+        public function getColumnName(): string
         {
             return Table::getColumnName($this->column);
         }

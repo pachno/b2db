@@ -2,43 +2,35 @@
 
     namespace b2db;
 
-    /**
-     * Row class
-     *
-     * @author Daniel Andre Eikeland <zegenie@zegeniestudios.net>
-     * @version 2.0
-     * @license http://www.opensource.org/licenses/mozilla1.1.php Mozilla Public License 1.1 (MPL 1.1)
-     * @package b2db
-     * @subpackage core
-     */
+    use ArrayAccess;
+    use b2db\interfaces\QueryInterface;
 
     /**
      * Row class
      *
      * @package b2db
-     * @subpackage core
+     *
+     * @implements \ArrayAccess<int|string, mixed>
      */
-    class Row implements \ArrayAccess
+    class Row implements ArrayAccess
     {
 
-        protected $fields = [];
-
         /**
-         * Statement
-         *
-         * @var Statement
+         * @var array<int|string, mixed>
          */
-        protected $statement = null;
+        protected array $fields = [];
 
-        protected $id_col = null;
+        protected Statement $statement;
+
+        protected string $id_column;
 
         /**
          * Constructor
          *
-         * @param mixed[] $row
+         * @param array<int|string, mixed> $row
          * @param Statement $statement
          */
-        public function __construct($row, $statement)
+        public function __construct(array $row, Statement $statement)
         {
             foreach ($row as $key => $val) {
                 $this->fields[$key] = $val;
@@ -49,17 +41,17 @@
         /**
          * @return Join[]
          */
-        public function getJoinedTables()
+        public function getJoinedTables(): array
         {
             return $this->statement->getQuery()->getJoins();
         }
 
-        protected function getColumnName($column, $foreign_key = null)
+        protected function getColumnName(string $column, string $foreign_key = null): string
         {
             if ($foreign_key !== null) {
                 foreach ($this->statement->getQuery()->getJoins() as $join) {
-                    if ($join->getOriginalColumn() == $foreign_key) {
-                        $column = $join->getTable()->getB2DBAlias() . '.' . Table::getColumnName($column);
+                    if ($join->getOriginalColumn() === $foreign_key) {
+                        $column = $join->getTable()->getB2dbAlias() . '.' . Table::getColumnName($column);
                         break;
                     }
                 }
@@ -70,38 +62,33 @@
             return $column;
         }
 
-        public function get($column, $foreign_key = null)
+        /**
+         * @return ?mixed
+         */
+        public function get(string $column, string $foreign_key = null)
         {
-            if ($this->statement == null) {
+            if (!isset($this->statement)) {
                 throw new Exception('Statement did not execute, cannot return unknown value for column ' . $column);
             }
 
             $column = $this->getColumnName($column, $foreign_key);
 
-            if (isset($this->fields[$this->statement->getQuery()->getSelectionAlias($column)])) {
-                return $this->fields[$this->statement->getQuery()->getSelectionAlias($column)];
-            }
-
-            return null;
+            return $this->fields[$this->statement->getQuery()->getSelectionAlias($column)] ?? null;
         }
 
-        /**
-         * Return the associated Query
-         *
-         * @return Query
-         */
-        public function getQuery()
+        public function getQuery(): QueryInterface
         {
             return $this->statement->getQuery();
         }
 
-        public function offsetExists($offset)
+        public function offsetExists($offset): bool
         {
-            if (strpos($offset, '.') === false)
-                return (bool) array_key_exists($offset, $this->fields);
+            if (strpos($offset, '.') === false) {
+                return array_key_exists($offset, $this->fields);
+            }
 
             $column = $this->getColumnName($offset);
-            return (bool) array_key_exists($this->statement->getQuery()->getSelectionAlias($column), $this->fields);
+            return array_key_exists($this->statement->getQuery()->getSelectionAlias($column), $this->fields);
         }
 
         public function offsetGet($offset)
@@ -109,23 +96,23 @@
             return $this->get($offset);
         }
 
-        public function offsetSet($offset, $value)
+        public function offsetSet($offset, $value): void
         {
             throw new \Exception('Not supported');
         }
 
-        public function offsetUnset($offset)
+        public function offsetUnset($offset): void
         {
             throw new \Exception('Not supported');
         }
 
-        public function getID()
+        public function getID(): int
         {
-            if ($this->id_col === null) {
-                $this->id_col = $this->statement->getQuery()->getTable()->getIdColumn();
+            if (!isset($this->id_column)) {
+                $this->id_column = $this->statement->getQuery()->getTable()->getIdColumn();
             }
 
-            return $this->get($this->id_col);
+            return $this->get($this->id_column);
         }
 
     }

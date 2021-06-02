@@ -2,56 +2,84 @@
 
     namespace b2db;
 
+    /**
+     * Annotation class
+     *
+     * @package b2db
+     */
     class Annotation
     {
 
-        protected $_key;
+        /**
+         * @var string
+         */
+        protected string $_key;
 
-        protected $_data = array();
+        /**
+         * @var array<string, string>
+         */
+        protected array $_data;
 
-        public function __construct($key, $annotation_data)
+        /**
+         * Annotation constructor.
+         * @param string $key
+         * @param string $annotation_data_string
+         */
+        public function __construct(string $key, string $annotation_data_string)
         {
             $this->_key = $key;
+            $this->_data = [];
 
-            $this->_data = array();
-            $ad = explode(',', str_replace("\n", "", $annotation_data));
-            foreach ($ad as $a_item) {
-                $ad_info = explode('=', trim($a_item));
-                $ad_info[0] = trim($ad_info[0], "* \t\r\n\0\x0B");
+            $annotation_data = explode(',', str_replace("\n", "", $annotation_data_string));
+            foreach ($annotation_data as $annotation_item) {
+                $annotation_info = explode('=', trim($annotation_item));
+                $annotation_info[0] = trim($annotation_info[0], "* \t\r\n\0\x0B");
 
-                if (array_key_exists(1, $ad_info)) {
+                if (array_key_exists(1, $annotation_info)) {
                     switch (true) {
-                        case (in_array($ad_info[1][0], array('"', "'")) && in_array($ad_info[1][strlen($ad_info[1]) - 1], array('"', "'"))):
-                            $value = trim(str_replace(array('"', "'"), array('', ''), $ad_info[1]));
+                        case (in_array($annotation_info[1][0], ['"', "'"]) && in_array($annotation_info[1][strlen($annotation_info[1]) - 1], ['"', "'"])):
+                            $value = trim(str_replace(['"', "'"], ['', ''], $annotation_info[1]));
                             break;
-                        case (in_array($ad_info[1], array('true', 'false'))):
-                            $value = ($ad_info[1] == 'true') ? true : false;
+                        case (in_array($annotation_info[1], ['true', 'false'])):
+                            $value = $annotation_info[1] === 'true';
                             break;
-                        case (is_numeric($ad_info[1])):
-                            $value = (integer) $ad_info[1];
+                        case (is_numeric($annotation_info[1])):
+                            $value = (int) $annotation_info[1];
                             break;
-                        case (defined($ad_info[1])):
-                            $value = array('type' => 'constant', 'value' => $ad_info[1]);
+                        case (defined($annotation_info[1])):
+                            $value = ['type' => 'constant', 'value' => $annotation_info[1]];
                             break;
                         default:
-                            $value = trim($ad_info[1]);
+                            $value = trim($annotation_info[1]);
                     }
-                    $this->_data[trim($ad_info[0])] = $value;
+                    $this->_data[trim($annotation_info[0])] = $value;
                 }
             }
         }
 
-        public function hasProperty($property)
+        /**
+         * @param string $property
+         * @return bool
+         */
+        public function hasProperty(string $property): bool
         {
             return array_key_exists($property, $this->_data);
         }
 
-        public function getProperty($property, $default_value = null)
+        /**
+         * @param string $property
+         * @param mixed|null $default_value
+         * @return string|int
+         */
+        public function getProperty(string $property, $default_value = null)
         {
             return ($this->hasProperty($property)) ? $this->_data[$property] : $default_value;
         }
 
-        public function getProperties()
+        /**
+         * @return array<string, string>
+         */
+        public function getProperties(): array
         {
             return $this->_data;
         }

@@ -5,10 +5,16 @@
     interface CriterionProvider
     {
 
-        public function getSql();
+        public function getSql(bool $strip_table_name = false): string;
 
-        public function getValues();
+        /**
+         * @return array<string, mixed>
+         */
+        public function getValues(): array;
 
-        public function getColumns();
+        /**
+         * @return array<string, mixed>
+         */
+        public function getColumns(): array;
 
     }

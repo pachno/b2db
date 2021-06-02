@@ -6,14 +6,18 @@
      * Insertion wrapper class
      *
      * @package b2db
-     * @subpackage core
      */
     class Update extends Insertion
     {
 
-        public function update($column, $value, $variable = null)
+        /**
+         * @param string $column
+         * @param mixed $value
+         * @param string|null $variable
+         */
+        public function update(string $column, $value, string $variable = null): void
         {
-            parent::add($column, $value, $variable);
+            $this->add($column, $value, $variable);
         }
 
     }

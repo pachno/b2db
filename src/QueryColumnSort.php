@@ -6,40 +6,37 @@
      * Criterion class
      *
      * @package b2db
-     * @subpackage core
      */
     class QueryColumnSort
     {
 
-        const SORT_ASC = 'asc';
-        const SORT_ASC_NUMERIC = 'asc_numeric';
-        const SORT_DESC = 'desc';
-        const SORT_DESC_NUMERIC = 'desc_numeric';
+        public const SORT_ASC = 'asc';
+        public const SORT_ASC_NUMERIC = 'asc_numeric';
+        public const SORT_DESC = 'desc';
+        public const SORT_DESC_NUMERIC = 'desc_numeric';
 
-        protected $column;
+        protected string $column;
 
-        protected $order;
+        protected string $order;
 
         /**
          * @param string $column
-         * @param string $order
+         * @param ?string $order
          */
-        public function __construct($column, $order = self::SORT_ASC)
+        public function __construct(string $column, string $order = null)
         {
             $this->column = $column;
-            $this->order = $order;
+            $this->order = $order ?? self::SORT_ASC;
         }
 
-        /**
-         * @return string
-         */
-        public function getColumn()
+        public function getColumn(): string
         {
             return $this->column;
         }
 
         /**
-         * @return string|array
+         * @return string|array<string>
+         * @noinspection PhpReturnDocTypeMismatchInspection
          */
         public function getOrder()
         {

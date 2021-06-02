@@ -3,22 +3,14 @@
     namespace b2db;
 
     use b2db\interfaces\QueryInterface;
-
-    /**
-     * Statement class
-     *
-     * @author Daniel Andre Eikeland <zegenie@zegeniestudios.net>
-     * @version 2.0
-     * @license http://www.opensource.org/licenses/mozilla1.1.php Mozilla Public License 1.1 (MPL 1.1)
-     * @package b2db
-     * @subpackage core
-     */
+    use PDO;
+    use PDOException;
+    use PDOStatement;
 
     /**
      * Statement class
      *
      * @package b2db
-     * @subpackage core
      */
     class Statement
     {
@@ -28,22 +20,28 @@
          *
          * @var QueryInterface
          */
-        protected $query;
+        protected QueryInterface $query;
 
         /**
          * PDO statement
          *
-         * @var \PDOStatement
+         * @var PDOStatement
          */
-        protected $statement;
+        protected PDOStatement $statement;
 
+        /**
+         * @var array<int, string|int|bool>|bool
+         */
         protected $values = [];
 
-        protected $params = [];
+        /**
+         * @var array<int, string|int|bool>
+         */
+        protected array $params = [];
 
-        protected $insert_id;
+        protected int $insert_id;
 
-        protected $custom_sql = '';
+        protected string $custom_sql = '';
 
         /**
          * Returns a statement
@@ -52,20 +50,17 @@
          *
          * @return Statement
          */
-        public static function getPreparedStatement(QueryInterface $query)
+        public static function getPreparedStatement(QueryInterface $query): Statement
         {
-            $statement = new Statement($query);
-
-            return $statement;
+            return new Statement($query);
         }
 
         /**
          * Statement constructor.
          *
          * @param QueryInterface $query
-         * @throws \Exception
          */
-        public function __construct($query)
+        public function __construct(QueryInterface $query)
         {
             $this->query = $query;
             $this->prepare();
@@ -76,11 +71,15 @@
          *
          * @return Resultset
          */
-        public function execute()
+        public function execute(): Resultset
         {
-            $values = ($this->getQuery() instanceof QueryInterface) ? $this->getQuery()->getValues() : array();
+            $values = ($this->getQuery() instanceof QueryInterface) ? $this->getQuery()->getValues() : [];
             if (Core::isDebugMode()) {
                 if (Core::isDebugLoggingEnabled() && class_exists('\\caspar\\core\\Logging')) {
+                    // TODO: Add event support instead of manual tie-in
+                    /** @noinspection PhpUndefinedClassInspection */
+                    /** @noinspection PhpUndefinedNamespaceInspection */
+                    /** @noinspection PhpFullyQualifiedNameUsageInspection */
                     \caspar\core\Logging::log('executing PDO query (' . Core::getSQLCount() . ') - ' . (($this->getQuery() instanceof Criteria) ? $this->getQuery()->getAction() : 'unknown'), 'B2DB');
                 }
 
@@ -91,22 +90,35 @@
 
             if (!$res) {
                 $error = $this->statement->errorInfo();
-                if (Core::isDebugMode()) {
-                    Core::sqlHit($this, $previous_time);
+                /** @noinspection NotOptimalIfConditionsInspection */
+                if (Core::isDebugMode() && isset($previous_time)) {
+                    Core::sqlStatementHit($this, $previous_time);
                 }
                 throw new Exception($error[2], $this->printSQL());
             }
             if (Core::isDebugLoggingEnabled() && class_exists('\\caspar\\core\\Logging')) {
+                // TODO: Add event support instead of manual tie-in
+                /** @noinspection PhpUndefinedClassInspection */
+                /** @noinspection PhpUndefinedNamespaceInspection */
+                /** @noinspection PhpFullyQualifiedNameUsageInspection */
                 \caspar\core\Logging::log('done', 'B2DB');
             }
 
             if ($this->getQuery() instanceof Query && $this->getQuery()->isInsert()) {
-                if (Core::getDriver() == Core::DRIVER_MYSQL) {
-                    $this->insert_id = Core::getDBLink()->lastInsertId();
-                } elseif (Core::getDriver() == Core::DRIVER_POSTGRES) {
-                    $this->insert_id = Core::getDBLink()->lastInsertId(Core::getTablePrefix() . $this->getQuery()->getTable()->getB2DBName() . '_id_seq');
+                if (Core::getDriver() === Core::DRIVER_MYSQL) {
+                    $this->insert_id = (int) Core::getDBLink()->lastInsertId();
+                } elseif (Core::getDriver() === Core::DRIVER_POSTGRES) {
+                    $this->insert_id = (int) Core::getDBLink()->lastInsertId(Core::getTablePrefix() . $this->getQuery()->getTable()->getB2dbName() . '_id_seq');
                     if (Core::isDebugLoggingEnabled() && class_exists('\\caspar\\core\\Logging')) {
-                        \caspar\core\Logging::log('sequence: ' . Core::getTablePrefix() . $this->getQuery()->getTable()->getB2DBName() . '_id_seq', 'b2db');
+                        // TODO: Add event support instead of manual tie-in
+
+                        /** @noinspection PhpUndefinedClassInspection */
+                        /** @noinspection PhpUndefinedNamespaceInspection */
+                        /** @noinspection PhpFullyQualifiedNameUsageInspection */
+                        \caspar\core\Logging::log('sequence: ' . Core::getTablePrefix() . $this->getQuery()->getTable()->getB2dbName() . '_id_seq', 'b2db');
+                        /** @noinspection PhpUndefinedClassInspection */
+                        /** @noinspection PhpUndefinedNamespaceInspection */
+                        /** @noinspection PhpFullyQualifiedNameUsageInspection */
                         \caspar\core\Logging::log('id is: ' . $this->insert_id, 'b2db');
                     }
                 }
@@ -114,8 +126,9 @@
 
             $return_value = new Resultset($this);
 
-            if (Core::isDebugMode()) {
-                Core::sqlHit($this, $previous_time);
+            /** @noinspection NotOptimalIfConditionsInspection */
+            if (Core::isDebugMode() && isset($previous_time)) {
+                Core::sqlStatementHit($this, $previous_time);
             }
 
             if (!$this->getQuery() || $this->getQuery()->isSelect()) {
@@ -128,9 +141,9 @@
         /**
          * Returns the criteria object
          *
-         * @return Query
+         * @return QueryInterface
          */
-        public function getQuery()
+        public function getQuery(): ?interfaces\QueryInterface
         {
             return $this->query;
         }
@@ -138,53 +151,50 @@
         /**
          * Return the ID for the inserted record
          */
-        public function getInsertID()
+        public function getInsertID(): int
         {
             return $this->insert_id;
-        }
-
-        public function getColumnValuesForCurrentRow()
-        {
-            return $this->values;
         }
 
         /**
          * Return the number of affected rows
          */
-        public function getNumRows()
+        public function getNumRows(): int
         {
             return $this->statement->rowCount();
         }
 
         /**
          * Fetch the resultset
+         *
+         * @return array<int|string, bool|int|string|array>|bool
          */
         public function fetch()
         {
             try {
-                if ($this->values = $this->statement->fetch(\PDO::FETCH_ASSOC)) {
+                if ($this->values = $this->statement->fetch(PDO::FETCH_ASSOC)) {
                     return $this->values;
-                } else {
-                    return false;
                 }
-            } catch (\PDOException $e) {
-                throw new Exception('An error occured while trying to fetch the result: "' . $e->getMessage() . '"');
+
+                return false;
+            } catch (PDOException $e) {
+                throw new Exception('An error occurred while trying to fetch the result: "' . $e->getMessage() . '"');
             }
         }
 
         /**
          * Prepare the statement
          */
-        protected function prepare()
+        protected function prepare(): void
         {
-            if (!Core::getDBlink() instanceof \PDO) {
+            if (!Core::getDBlink() instanceof PDO) {
                 throw new Exception('Connection not up, can\'t prepare the statement');
             }
 
             $this->statement = Core::getDBlink()->prepare($this->query->getSql());
         }
 
-        public function printSQL()
+        public function printSQL(): string
         {
             $str = '';
             $str .= $this->query->getSql();

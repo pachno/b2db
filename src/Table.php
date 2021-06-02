@@ -215,7 +215,7 @@
         /**
          * Sets the initial auto_increment value to something else than 1
          *
-         * @param integer $start_at
+         * @param int $start_at
          */
         public function setAutoIncrementStart($start_at)
         {
@@ -238,7 +238,7 @@
          *
          * @return string
          */
-        public function getB2DBName()
+        public function getB2dbName()
         {
             return $this->b2db_name;
         }
@@ -248,7 +248,7 @@
          *
          * @return string
          */
-        public function getB2DBAlias()
+        public function getB2dbAlias()
         {
             return $this->b2db_alias;
         }
@@ -260,7 +260,7 @@
                 $table_classname = $column['class'];
                 $table = clone $table_classname::getTable();
                 $key = ($column['key']) ?? $table->getIdColumn();
-                $this->foreign_tables[$table->getB2DBAlias()] = new ForeignTable($table, $key, $column['name']);
+                $this->foreign_tables[$table->getB2dbAlias()] = new ForeignTable($table, $key, $column['name']);
             }
         }
 
@@ -289,7 +289,7 @@
          */
         public function getForeignTable($table)
         {
-            return $this->foreign_tables[$table->getB2DBAlias()];
+            return $this->foreign_tables[$table->getB2dbAlias()];
         }
 
         /**
@@ -351,7 +351,7 @@
         /**
          * Returns one row from the current table based on a given id
          *
-         * @param integer $id
+         * @param int $id
          * @param Query|null $query
          * @param mixed $join
          *
@@ -374,7 +374,7 @@
         /**
          * Select an object by its unique id
          *
-         * @param integer $id
+         * @param int $id
          * @param Query $query (optional) Criteria with filters
          * @param mixed $join
          *
@@ -387,7 +387,7 @@
                 $row = $this->rawSelectById($id, $query, $join);
                 $object = $this->populateFromRow($row);
             } else {
-                $object = $this->getB2DBCachedObject($id);
+                $object = $this->getB2dbCachedObject($id);
             }
             return $object;
         }
@@ -397,7 +397,7 @@
          *
          * @param Query $query
          *
-         * @return integer
+         * @return int
          */
         public function count(Query $query)
         {
@@ -512,7 +512,7 @@
          * Perform an SQL update
          *
          * @param Update $update
-         * @param integer $id
+         * @param int $id
          *
          * @return Resultset|null
          */
@@ -554,7 +554,7 @@
         /**
          * Perform an SQL delete by an id
          *
-         * @param integer $id
+         * @param int $id
          *
          * @return Resultset|null
          */
@@ -586,7 +586,7 @@
                 $this->drop();
                 return Statement::getPreparedStatement($query)->execute();
             } catch (\Exception $e) {
-                throw new Exception('Error creating table ' . $this->getB2DBName() . ': ' . $e->getMessage(), $sql);
+                throw new Exception('Error creating table ' . $this->getB2dbName() . ': ' . $e->getMessage(), $sql);
             }
         }
 
@@ -618,7 +618,7 @@
                     }
                 }
             } catch (Exception $e) {
-                throw new Exception('An error occured when trying to create indexes for table "' . $this->getB2DBName() . '" (defined in "\\' . get_class($this) . ')": ' . $e->getMessage(), $e->getSQL());
+                throw new Exception('An error occured when trying to create indexes for table "' . $this->getB2dbName() . '" (defined in "\\' . get_class($this) . ')": ' . $e->getMessage(), $e->getSQL());
             }
         }
 
@@ -640,14 +640,14 @@
                 $statement = Statement::getPreparedStatement($query);
                 return $statement->execute();
             } catch (\Exception $e) {
-                throw new Exception('Error dropping table ' . $this->getB2DBName() . ': ' . $e->getMessage(), $sql);
+                throw new Exception('Error dropping table ' . $this->getB2dbName() . ': ' . $e->getMessage(), $sql);
             }
         }
 
         /**
          * Return a new criteria with this table as the from-table
          *
-         * @param boolean $setup_join_tables [optional] Whether to auto-join all related tables by default
+         * @param bool $setup_join_tables [optional] Whether to auto-join all related tables by default
          *
          * @return Query
          */
@@ -669,9 +669,9 @@
                 case 'text':
                     return (string) $value;
                 case 'integer':
-                    return (integer) $value;
+                    return (int) $value;
                 case 'boolean':
-                    return (boolean) $value;
+                    return (bool) $value;
                 default:
                     return $value;
             }
@@ -679,7 +679,7 @@
 
         public function saveObject(Saveable $object)
         {
-            $id = $object->getB2DBID();
+            $id = $object->getB2dbID();
             if ($id) {
                 $update = new Update();
             } else {
@@ -694,14 +694,14 @@
                 }
 
                 $property = $column['property'];
-                $value = $this->formatify($object->getB2DBSaveablePropertyValue(mb_strtolower($property)), $column['type']);
+                $value = $this->formatify($object->getB2dbSaveablePropertyValue(mb_strtolower($property)), $column['type']);
 
                 if ($id && !$object->isB2DBValueChanged($property)) {
                     continue;
                 }
 
                 if ($value instanceof Saveable) {
-                    $value = (int) $value->getB2DBID();
+                    $value = (int) $value->getB2dbID();
                 }
 
                 if (in_array($column['name'], $this->foreign_columns)) {
@@ -951,7 +951,7 @@
 
         protected function getSubclassNameFromRow(Row $row, $classnames)
         {
-            $identifier = $row->get($this->getB2DBName() . '.' . $classnames['identifier']);
+            $identifier = $row->get($this->getB2dbName() . '.' . $classnames['identifier']);
             $classname = (\array_key_exists($identifier, $classnames['classes'])) ? $classnames['classes'][$identifier] : null;
             if (!$classname) {
                 throw new Exception("No classname has been specified in the @SubClasses annotation for identifier '{$identifier}'");
@@ -984,14 +984,14 @@
                         $classname = Core::getCachedTableEntityClass('\\'.get_class($this));
                     }
                     if (!$classname) {
-                        throw new Exception("Classname '{$classname}' or subclasses for table '{$this->getB2DBName()}' is not valid");
+                        throw new Exception("Classname '{$classname}' or subclasses for table '{$this->getB2dbName()}' is not valid");
                     }
                 }
 
                 $id_column = ($id_column) ?? $row->getQuery()->getTable()->getIdColumn();
                 $row_id = ($row_id !== null) ? $row_id : $row->get($id_column);
-                $is_cached = $classname::getB2DBTable()->hasCachedB2DBObject($row_id);
-                $item = $classname::getB2DBCachedObjectIfAvailable($row_id, $classname, $row);
+                $is_cached = $classname::getB2dbTable()->hasCachedB2DBObject($row_id);
+                $item = $classname::getB2dbCachedObjectIfAvailable($row_id, $classname, $row);
                 if (!$from_resultset && !$is_cached && Core::isDebugMode()) {
                     Core::objectPopulationHit(1, array($classname), $previous_time);
                 }
@@ -1020,7 +1020,7 @@
                 $query = $resultset->getQuery();
                 $id_column = ($id_column) ?? $query->getTable()->getIdColumn();
                 if ($index_column === null) {
-                    $index_column = ($query->getIndexBy()) ? $query->getIndexBy() : $id_column;
+                    $index_column = ($query->hasIndexBy()) ? $query->getIndexBy() : $id_column;
                 }
                 $classnames = Core::getCachedTableEntityClasses('\\'.get_class($this));
                 if ($classname === null) {
@@ -1031,7 +1031,7 @@
                         $classname = $this->getSubclassNameFromRow($row, $classnames);
                     }
                     $row_id = $row->get($id_column);
-                    $is_cached = $classname::getB2DBTable()->hasCachedB2DBObject($row_id);
+                    $is_cached = $classname::getB2dbTable()->hasCachedB2DBObject($row_id);
                     $item = $this->populateFromRow($row, $classname, $id_column, $row_id, true);
                     $items[$row->get($index_column)] = $item;
                     if (!$is_cached && Core::isDebugMode()) {
@@ -1056,7 +1056,7 @@
         public function generateForeignItemsQuery(Saveable $class, $relation_details)
         {
             $query = $this->getQuery();
-            $foreign_table = $class->getB2DBTable();
+            $foreign_table = $class->getB2dbTable();
             $foreign_table_class = '\\'.get_class($foreign_table);
             $item_class = (array_key_exists('class', $relation_details)) ? $relation_details['class'] : null;
             $item_column = null;
@@ -1070,7 +1070,7 @@
                 if ($relation_details['orderby']) {
                     $query->addOrderBy("{$table_details['name']}." . $relation_details['orderby']);
                 }
-                $query->where("{$table_details['name']}." . $relation_details['foreign_column'], $class->getB2DBSaveablePropertyValue(Core::getCachedColumnPropertyName($saveable_class, $foreign_table->getIdColumn())));
+                $query->where("{$table_details['name']}." . $relation_details['foreign_column'], $class->getB2dbSaveablePropertyValue(Core::getCachedColumnPropertyName($saveable_class, $foreign_table->getIdColumn())));
                 if (array_key_exists('discriminator', $table_details) && $table_details['discriminator'] && array_key_exists($saveable_class, $table_details['discriminator']['discriminators'])) {
                     $query->where($table_details['discriminator']['column'], $table_details['discriminator']['discriminators'][$saveable_class]);
                 }
@@ -1079,14 +1079,14 @@
                     if ($details['class'] == $foreign_table_class) {
                         $foreign_column = ($details['key']) ? $details['key'] : $foreign_table->getIdColumn();
                         $property_name = Core::getCachedColumnPropertyName(Core::getCachedTableEntityClass($details['class']), $foreign_column);
-                        $value = $class->getB2DBSaveablePropertyValue($property_name);
+                        $value = $class->getB2dbSaveablePropertyValue($property_name);
                         $query->where($column, $value);
                     } elseif ($item_class && $details['class'] == $item_table_class) {
                         $item_column = $column;
                     }
                 }
                 if ($relation_details['orderby']) {
-                    $query->addOrderBy($foreign_table->getB2DBName() . "." . $relation_details['orderby']);
+                    $query->addOrderBy($foreign_table->getB2dbName() . "." . $relation_details['orderby']);
                 }
             }
             return array($query, $item_class, $item_column);
@@ -1105,7 +1105,7 @@
                 $items = array();
                 $resultset = $this->rawSelect($query);
                 if ($resultset) {
-                    $column = "{$this->getB2DBName()}." . $relation_details['column'];
+                    $column = "{$this->getB2dbName()}." . $relation_details['column'];
                     while ($row = $resultset->getNextRow()) {
                         $items[] = $row->get($column);
                     }
@@ -1190,7 +1190,7 @@
          * @param $id
          * @return Saveable
          */
-        public function getB2DBCachedObject($id)
+        public function getB2dbCachedObject($id)
         {
             switch (Core::getCacheEntitiesStrategy()) {
                 case Core::CACHE_TYPE_INTERNAL:
@@ -1201,14 +1201,11 @@
             }
         }
 
-        /**
-         * @return string
-         */
         public function getSelectFromSql()
         {
             $name = $this->getSqlTableName();
-            $alias = $this->getB2DBAlias();
-            $sql = $name . ' ' . Query::quoteIdentifier($alias);
+            $alias = $this->getB2dbAlias();
+            $sql = $name . ' ' . SqlGenerator::quoteIdentifier($alias);
 
             return $sql;
         }

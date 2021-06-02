@@ -6,46 +6,51 @@
      * Criterion class
      *
      * @package b2db
-     * @subpackage core
      */
     class Criterion
     {
 
-        const EQUALS = '=';
-        const NOT_EQUALS = '!=';
-        const GREATER_THAN = '>';
-        const LESS_THAN = '<';
-        const GREATER_THAN_EQUAL = '>=';
-        const LESS_THAN_EQUAL = '<=';
-        const IS_NULL = 'IS NULL';
-        const IS_NOT_NULL = 'IS NOT NULL';
-        const LIKE = 'LIKE';
-        const ILIKE = 'ILIKE';
-        const NOT_LIKE = 'NOT LIKE';
-        const NOT_ILIKE = 'NOT ILIKE';
-        const IN = 'IN';
-        const NOT_IN = 'NOT IN';
+        public const EQUALS = '=';
+        public const NOT_EQUALS = '!=';
+        public const GREATER_THAN = '>';
+        public const LESS_THAN = '<';
+        public const GREATER_THAN_EQUAL = '>=';
+        public const LESS_THAN_EQUAL = '<=';
+        public const IS_NULL = 'IS NULL';
+        public const IS_NOT_NULL = 'IS NOT NULL';
+        public const LIKE = 'LIKE';
+        public const ILIKE = 'ILIKE';
+        public const NOT_LIKE = 'NOT LIKE';
+        public const NOT_ILIKE = 'NOT ILIKE';
+        public const IN = 'IN';
+        public const NOT_IN = 'NOT IN';
 
-        protected $column;
+        protected string $column;
 
+        /**
+         * @var mixed
+         */
         protected $value;
 
-        protected $operator = self::EQUALS;
+        protected string $operator = self::EQUALS;
 
-        protected $variable;
+        protected string $variable;
 
-        protected $additional;
+        protected string $additional;
 
-        protected $special;
+        protected string $special;
 
-        protected $sql;
+        protected string $sql;
 
         /**
          * @var Criteria
          */
-        protected $criteria;
+        protected Criteria $criteria;
 
-        public static function getOperators()
+        /**
+         * @return string[]
+         */
+        public static function getOperators(): array
         {
             return [
                 self::EQUALS,
@@ -71,17 +76,17 @@
          * @param string $column
          * @param mixed $value[optional]
          * @param string $operator[optional]
-         * @param string $variable[optional]
-         * @param string $additional[optional]
-         * @param string $special[optional]
+         * @param ?string $variable[optional]
+         * @param ?string $additional[optional]
+         * @param ?string $special[optional]
          */
-        public function __construct($column, $value = '', $operator = self::EQUALS, $variable = null, $additional = null, $special = null)
+        public function __construct(string $column, $value = '', string $operator = self::EQUALS, string $variable = null, string $additional = null, string $special = null)
         {
             if ($column !== '') {
                 $this->column = $column;
                 $this->value = $value;
                 if ($operator !== null) {
-                    if ($operator == self::IN && !$value) {
+                    if ($operator === self::IN && !$value) {
                         throw new Exception('Cannot use an empty value for WHERE IN criteria');
                     }
 
@@ -101,7 +106,7 @@
             $this->validateOperator();
         }
 
-        protected function validateOperator()
+        protected function validateOperator(): void
         {
             if (!in_array($this->operator, self::getOperators())) {
                 throw new Exception("Invalid operator", $this->getOperator());
@@ -111,7 +116,7 @@
         /**
          * @param Criteria $criteria
          */
-        public function setCriteria(Criteria $criteria)
+        public function setCriteria(Criteria $criteria): void
         {
             $this->criteria = $criteria;
         }
@@ -124,18 +129,12 @@
             return $this->criteria;
         }
 
-        /**
-         * @return string
-         */
-        public function getColumn()
+        public function getColumn(): string
         {
             return $this->column;
         }
 
-        /**
-         * @param string $column
-         */
-        public function setColumn($column)
+        public function setColumn(string $column): void
         {
             $this->column = $column;
         }
@@ -151,118 +150,94 @@
         /**
          * @param mixed $value
          */
-        public function setValue($value)
+        public function setValue($value): void
         {
             $this->value = $value;
         }
 
-        /**
-         * @return string
-         */
-        public function getOperator()
+        public function getOperator(): string
         {
             return $this->operator;
         }
 
-        /**
-         * @param string $operator
-         */
-        public function setOperator($operator)
+        public function setOperator(string $operator): void
         {
             $this->operator = $operator;
             $this->validateOperator();
         }
 
-        /**
-         * @return string
-         */
-        public function getVariable()
+        public function getVariable(): string
         {
-            return $this->variable;
+            return $this->variable ?? '';
         }
 
-        /**
-         * @param string $variable
-         */
-        public function setVariable($variable)
+        public function setVariable(string $variable): void
         {
             $this->variable = $variable;
         }
 
-        /**
-         * @return string
-         */
-        public function getAdditional()
+        public function getAdditional(): string
         {
             return $this->additional;
         }
 
-        /**
-         * @param string $additional
-         */
-        public function setAdditional($additional)
+        public function setAdditional(string $additional): void
         {
             $this->additional = $additional;
         }
 
-        /**
-         * @return string
-         */
-        public function getSpecial()
+        public function getSpecial(): string
         {
             return $this->special;
         }
 
-        /**
-         * @param string $special
-         */
-        public function setSpecial($special)
+        public function setSpecial(string $special): void
         {
             $this->special = $special;
         }
 
-        protected function getQuery()
+        protected function getQuery(): Query
         {
             return $this->criteria->getQuery();
         }
 
-        public function isNullTypeOperator()
+        public function isNullTypeOperator(): bool
         {
             return in_array($this->operator, [self::IS_NOT_NULL, self::IS_NULL]);
         }
 
-        public function isInTypeOperator()
+        public function isInTypeOperator(): bool
         {
             return in_array($this->operator, [self::IN, self::NOT_IN]);
         }
 
-        public function getSql($strip_table_name = false)
+        public function getSql(bool $strip_table_name = false): string
         {
-            if ($this->sql !== null) {
+            if (isset($this->sql)) {
                 return $this->sql;
             }
 
             $column = ($strip_table_name) ? Table::getColumnName($this->column) : $this->getQuery()->getSelectionColumn($this->column);
-            $initial_sql = Query::quoteIdentifier($column);
+            $initial_sql = SqlGenerator::quoteIdentifier($column);
 
-            if ($this->special) {
-                $sql = "{$this->special}({$initial_sql})";
+            if (isset($this->special)) {
+                $sql = "$this->special($initial_sql)";
             } else {
                 $sql = $initial_sql;
             }
 
             if ($this->value === null && !$this->isNullTypeOperator()) {
-                $this->operator = ($this->operator == self::EQUALS) ? self::IS_NULL : self::IS_NOT_NULL;
-            } elseif (is_array($this->value) && $this->operator != self::NOT_IN) {
+                $this->operator = ($this->operator === self::EQUALS) ? self::IS_NULL : self::IS_NOT_NULL;
+            } elseif (is_array($this->value) && $this->operator !== self::NOT_IN) {
                 $this->operator = self::IN;
             }
 
-            $sql .= " {$this->operator} ";
+            $sql .= " $this->operator ";
 
             if (!$this->isNullTypeOperator()) {
                 if (is_array($this->value)) {
                     $placeholders = [];
-                    for ($cc = 0; $cc < count($this->value); $cc += 1) {
+                    for ($cc = 0, $ccMax = count($this->value); $cc < $ccMax; $cc++) {
                         $placeholders[] = '?';
                     }
                     $sql .= '(' . implode(', ', $placeholders) . ')';

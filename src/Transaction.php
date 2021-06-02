@@ -16,74 +16,73 @@
      * Transaction class
      *
      * @package b2db
-     * @subpackage core
      */
     class Transaction
     {
 
-        protected $state = 0;
+        protected int $state = 0;
 
-        const DB_TRANSACTION_UNSTARTED = 0;
+        public const DB_TRANSACTION_NOT_STARTED = 0;
 
-        const DB_TRANSACTION_STARTED = 1;
+        public const DB_TRANSACTION_STARTED = 1;
 
-        const DB_TRANSACTION_COMMITED = 2;
+        public const DB_TRANSACTION_COMMITTED = 2;
 
-        const DB_TRANSACTION_ROLLEDBACK = 3;
+        public const DB_TRANSACTION_ROLLED_BACK = 3;
 
-        const DB_TRANSACTION_ENDED = 4;
+        public const DB_TRANSACTION_ENDED = 4;
 
         public function __construct()
         {
             if (Core::getDBLink()->beginTransaction()) {
                 $this->state = self::DB_TRANSACTION_STARTED;
-                Core::setTransaction(true);
+                Core::setTransaction(self::DB_TRANSACTION_STARTED);
             }
         }
 
         public function __destruct()
         {
-            if ($this->state == self::DB_TRANSACTION_STARTED) {
+            if ($this->state === self::DB_TRANSACTION_STARTED) {
                 echo 'forcing transaction rollback';
             }
         }
 
-        public function end()
+        public function end(): void
         {
-            if ($this->state == self::DB_TRANSACTION_COMMITED) {
+            if ($this->state === self::DB_TRANSACTION_COMMITTED) {
                 $this->state = self::DB_TRANSACTION_ENDED;
-                Core::setTransaction(false);
+                Core::setTransaction(self::DB_TRANSACTION_ENDED);
             }
         }
 
-        public function commitAndEnd()
+        public function commitAndEnd(): void
         {
             $this->commit();
             $this->end();
         }
 
-        public function commit()
+        public function commit(): void
         {
-            if ($this->state == self::DB_TRANSACTION_STARTED) {
+            if ($this->state === self::DB_TRANSACTION_STARTED) {
                 if (Core::getDBLink()->commit()) {
-                    $this->state = self::DB_TRANSACTION_COMMITED;
-                    Core::setTransaction(false);
+                    $this->state = self::DB_TRANSACTION_COMMITTED;
+                    Core::setTransaction(self::DB_TRANSACTION_COMMITTED);
                 } else {
-                    throw new Exception('Error committing transaction: ' . join(', ', Core::getDBLink()->errorInfo()));
+                    throw new Exception('Error committing transaction: ' . implode(', ', Core::getDBLink()->errorInfo()));
                 }
             } else {
                 throw new Exception('There is no active transaction');
             }
         }
 
-        public function rollback()
+        public function rollback(): void
         {
-            if ($this->state == self::DB_TRANSACTION_STARTED) {
+            if ($this->state === self::DB_TRANSACTION_STARTED) {
                 if (Core::getDBLink()->rollback()) {
-                    $this->state = self::DB_TRANSACTION_ROLLEDBACK;
-                    Core::setTransaction(false);
+                    $this->state = self::DB_TRANSACTION_ROLLED_BACK;
+                    Core::setTransaction(self::DB_TRANSACTION_ROLLED_BACK);
                 } else {
-                    throw new Exception('Error rolling back transaction: ' . join(', ', Core::getDBLink()->errorInfo()));
+                    throw new Exception('Error rolling back transaction: ' . implode(', ', Core::getDBLink()->errorInfo()));
                 }
             } else {
                 throw new Exception('There is no active transaction');

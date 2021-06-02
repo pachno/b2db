@@ -1,5 +1,7 @@
 <?php
 
+    /** @noinspection SpellCheckingInspection */
+
     namespace b2db;
 
     use b2db\interfaces\QueryInterface;
@@ -8,69 +10,86 @@
      * Criterion class
      *
      * @package b2db
-     * @subpackage core
      */
     class RawQuery implements QueryInterface
     {
 
-        protected $columns;
+        /**
+         * @var array<string>
+         */
+        protected array $columns;
 
-        protected $values = [];
+        /**
+         * @var array<int|string|bool>
+         */
+        protected array $values = [];
 
-        protected $sql;
+        protected string $sql;
 
-        protected $action;
+        protected string $action;
+
+        /**
+         * The table this query originates from
+         *
+         * @var Table
+         */
+        protected Table $table;
 
         /**
          */
-        public function __construct($sql)
+        public function __construct(string $sql)
         {
             $this->sql = $sql;
         }
 
-        public function getSql()
+        public function getSql(): string
         {
             return $this->sql;
         }
 
         /**
-         * @return mixed
+         * @return array<string>
          */
-        public function getColumns()
+        public function getColumns(): array
         {
             return $this->columns;
         }
 
         /**
-         * @return mixed
+         * @return array<int|string|bool>
          */
-        public function getValues()
+        public function getValues(): array
         {
             return $this->values;
         }
 
-        public function setSql($sql)
+        public function setSql(string $sql): void
         {
             $this->sql = $sql;
-            $this->action = null;
+            unset($this->action);
         }
 
-        public function getAction()
+        public function getAction(): string
         {
-            if ($this->action === null) {
+            if (!isset($this->action)) {
                 $action = substr($this->sql, 0, 5);
 
                 switch ($action) {
                     case 'selec':
                         $this->action = QueryInterface::ACTION_SELECT;
+                        break;
                     case 'updat':
                         $this->action = QueryInterface::ACTION_UPDATE;
+                        break;
                     case 'inser':
                         $this->action = QueryInterface::ACTION_INSERT;
+                        break;
                     case 'delet':
                         $this->action = QueryInterface::ACTION_DELETE;
+                        break;
                     case 'count':
                         $this->action = QueryInterface::ACTION_COUNT;
+                        break;
                     default:
                         $this->action = '';
                 }
@@ -79,29 +98,67 @@
             return $this->action;
         }
 
-        public function isCount()
+        public function isCount(): bool
         {
-            return (bool) ($this->action == QueryInterface::ACTION_COUNT);
+            return ($this->action === QueryInterface::ACTION_COUNT);
         }
 
-        public function isSelect()
+        public function isSelect(): bool
         {
-            return (bool) ($this->action == QueryInterface::ACTION_SELECT);
+            return ($this->action === QueryInterface::ACTION_SELECT);
         }
 
-        public function isDelete()
+        public function isDelete(): bool
         {
-            return (bool) ($this->action == QueryInterface::ACTION_DELETE);
+            return ($this->action === QueryInterface::ACTION_DELETE);
         }
 
-        public function isInsert()
+        public function isInsert(): bool
         {
-            return (bool) ($this->action == QueryInterface::ACTION_INSERT);
+            return ($this->action === QueryInterface::ACTION_INSERT);
         }
 
-        public function isUpdate()
+        public function isUpdate(): bool
         {
-            return (bool) ($this->action == QueryInterface::ACTION_UPDATE);
+            return ($this->action === QueryInterface::ACTION_UPDATE);
+        }
+
+        /**
+         * Returns the table the criteria applies to
+         *
+         * @return Table
+         */
+        public function getTable(): Table
+        {
+            return $this->table;
+        }
+
+        public function setTable(Table $table): void
+        {
+            $this->table = $table;
+        }
+
+        /**
+         * @return array<int, null>
+         */
+        public function getJoins(): array
+        {
+            throw new Exception('This method is not implemented in the RawQuery class');
+        }
+
+        public function getSelectionColumn(string $column): string
+        {
+            throw new Exception('This method is not implemented in the RawQuery class');
+        }
+
+        /**
+         * Get the selection alias for a specified column
+         *
+         * @param string|array<string, string> $column
+         */
+        public function getSelectionAlias($column): string
+        {
+            throw new Exception('This method is not implemented in the RawQuery class');
         }
 
     }

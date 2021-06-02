@@ -2,12 +2,24 @@
 
     namespace b2db;
 
+    /**
+     * Tools class for common tool methods
+     *
+     * @package b2db
+     */
     class Tools
     {
 
-        public static function array_diff_recursive($aArray1, $aArray2)
+        /**
+         * @param array<string, mixed> $aArray1
+         * @param array<string, mixed> $aArray2
+         * @noinspection TypeUnsafeComparisonInspection
+         *
+         * @return array<string, mixed>
+         */
+        public static function array_diff_recursive(array $aArray1, array $aArray2): array
         {
-            $aReturn = array();
+            $aReturn = [];
 
             foreach ($aArray1 as $mKey => $mValue) {
                 if (array_key_exists($mKey, $aArray2)) {
@@ -16,10 +28,8 @@
                         if (count($aRecursiveDiff)) {
                             $aReturn[$mKey] = $aRecursiveDiff;
                         }
-                    } else {
-                        if ($mValue != $aArray2[$mKey]) {
-                            $aReturn[$mKey] = $mValue;
-                        }
+                    } elseif ($mValue != $aArray2[$mKey]) {
+                        $aReturn[$mKey] = $mValue;
                     }
                 } else {
                     $aReturn[$mKey] = $mValue;

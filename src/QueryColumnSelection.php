@@ -6,35 +6,34 @@
      * Criterion class
      *
      * @package b2db
-     * @subpackage core
      */
     class QueryColumnSelection
     {
 
-        protected $column;
+        protected string $column;
 
-        protected $alias;
+        protected string $alias;
 
-        protected $variable;
+        protected string $variable;
 
-        protected $additional;
+        protected string $additional;
 
-        protected $special;
+        protected string $special;
 
         /**
          * @var Query
          */
-        protected $query;
+        protected Query $query;
 
         /**
          * @param Query $query
          * @param string $column
          * @param string $alias
-         * @param string $special
-         * @param string $variable
-         * @param string $additional
+         * @param ?string $special
+         * @param ?string $variable
+         * @param ?string $additional
          */
-        public function __construct(Query $query, $column, $alias = '', $special = null, $variable = null, $additional = null)
+        public function __construct(Query $query, string $column, string $alias = '', string $special = null, string $variable = null, string $additional = null)
         {
             $this->query = $query;
             $this->column = $column;
@@ -50,64 +49,60 @@
             }
         }
 
-        public function getSql()
+        public function getSql(): string
         {
             return $this->column . ' AS ' . $this->query->getSelectionAlias($this->column);
         }
 
-        /**
-         * @return string
-         */
-        public function getAlias()
+        public function getAlias(): string
         {
             return $this->alias;
         }
 
-        /**
-         * @return string
-         */
-        public function getColumn()
+        public function getColumn(): string
         {
             return $this->column;
         }
 
-        /**
-         * @return string|null
-         */
-        public function getVariable()
+        public function getVariable(): ?string
         {
             return $this->variable;
         }
 
-        public function getVariableString()
+        public function hasVariable(): bool
         {
-            return (isset($this->variable) && $this->variable != '') ? ' @' . $this->variable . ':=' : '';
+            return (isset($this->variable) && $this->variable !== '');
+        }
+
+        public function getVariableString(): string
+        {
+            return ($this->hasVariable()) ? ' @' . $this->variable . ':=' : '';
         }
 
         /**
-         * @return string|null
+         * @return ?string
          */
-        public function getAdditional()
+        public function getAdditional(): ?string
         {
             return $this->additional;
         }
 
-        public function hasAdditional()
+        public function hasAdditional(): bool
         {
-            return (bool) ($this->additional != '');
+            return (isset($this->additional) && $this->additional !== '');
         }
 
         /**
-         * @return string|null
+         * @return ?string
          */
-        public function getSpecial()
+        public function getSpecial(): ?string
         {
             return $this->special;
         }
 
-        public function isSpecial()
+        public function isSpecial(): bool
         {
-            return (bool) ($this->special != '');
+            return (isset($this->special) && $this->special !== '');
         }
 
     }

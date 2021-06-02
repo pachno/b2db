@@ -2,41 +2,54 @@
 
     namespace b2db;
 
-    use b2db\interfaces\QueryInterface;
-
     /**
      * Criterion class
      *
      * @package b2db
-     * @subpackage core
      */
     class SqlGenerator
     {
 
-        protected $sql;
+        protected string $sql;
 
-        protected $values;
+        /**
+         * @var array<string|int, mixed>
+         */
+        protected array $values;
 
         /**
          * @var Query
          */
-        protected $query;
+        protected Query $query;
 
-        protected $having = false;
+        protected bool $having = false;
 
         /**
          * @param Query $query
-         * @throws Exception
          */
         public function __construct(Query $query)
         {
             $this->query = $query;
         }
 
-        /**
-         * @return Table
-         */
-        protected function getTable()
+        public static function quoteIdentifier(string $id): string
+        {
+            $parts = [];
+            foreach (explode('.', $id) as $part) {
+                /** @noinspection DegradedSwitchInspection */
+                switch (Core::getDriver()) {
+                    case Core::DRIVER_MYSQL:
+                        $parts[] = "`$part`";
+                        break;
+                    default: # ANSI
+                        $parts[] = "\"$part\"";
+                        break;
+                }
+            }
+            return implode('.', $parts);
+        }
+
+        protected function getTable(): Table
         {
             return $this->query->getTable();
         }
@@ -47,37 +60,38 @@
          * @param mixed $value
          * @param bool $force_null
          */
-        protected function addValue($value, $force_null = false)
+        protected function addValue($value, bool $force_null = false): void
         {
             if (is_array($value)) {
                 foreach ($value as $single_value) {
                     $this->addValue($single_value);
                 }
-            } else {
-                if ($value !== null || $force_null) {
-                    $this->values[] = $this->query->getDatabaseValue($value);
-                }
+            } elseif ($value !== null || $force_null) {
+                $this->values[] = $this->query->getDatabaseValue($value);
             }
         }
 
-        public function getValues()
+        /**
+         * @return array<int|string, mixed>
+         */
+        public function getValues(): array
         {
             return $this->values;
         }
 
-        protected function hasHaving()
+        protected function hasHaving(): bool
         {
             return $this->having;
         }
 
-        protected function generateWherePartSql($strip = false)
+        protected function generateWherePartSql(bool $strip = false): string
         {
             $sql = '';
             if ($this->query->hasCriteria()) {
                 $sql_parts = [];
                 $criteria = $this->query->getCriteria();
                 foreach ($criteria as $criterion) {
-                    if ($criterion->getMode() == Query::MODE_HAVING) {
+                    if ($criterion->getMode() === Query::MODE_HAVING) {
                         $this->having = true;
                         continue;
                     }
@@ -86,10 +100,8 @@
                 }
 
                 if (count($sql_parts)) {
-                    $where = ' WHERE ';
-
                     if (count($sql_parts) > 1) {
-                        $sql = '(' . join(" {$this->query->getMode()} ", $sql_parts) . ')';
+                        $sql = '(' . implode(" {$this->query->getMode()} ", $sql_parts) . ')';
                     } else {
                         $sql = $sql_parts[0];
                     }
@@ -101,13 +113,12 @@
             return $sql;
         }
 
-        protected function generateHavingPartSql($strip = false)
+        protected function generateHavingPartSql(bool $strip = false): string
         {
-            $sql = '';
             $sql_parts = [];
             $criteria = $this->query->getCriteria();
             foreach ($criteria as $criterion) {
-                if ($criterion->getMode() != Query::MODE_HAVING) {
+                if ($criterion->getMode() !== Query::MODE_HAVING) {
                     continue;
                 }
 
@@ -115,17 +126,15 @@
             }
 
             if (count($sql_parts) > 1) {
-                $sql = '(' . join(" {$this->query->getMode()} ", $sql_parts) . ')';
+                $sql = '(' . implode(" {$this->query->getMode()} ", $sql_parts) . ')';
             } else {
                 $sql = $sql_parts[0];
             }
 
-            $sql = ' HAVING ' . $sql;
-
-            return $sql;
+            return ' HAVING ' . $sql;
         }
 
-        protected function generateGroupPartSql()
+        protected function generateGroupPartSql(): string
         {
             $sql = '';
 
@@ -134,7 +143,7 @@
                 $groups = [];
                 foreach ($this->query->getSortGroups() as $sort_group) {
                     $column_name = $this->query->getSelectionColumn($sort_group->getColumn());
-                    $groups[] = Query::quoteIdentifier($column_name) . ' ' . $sort_group->getOrder();
+                    $groups[] = self::quoteIdentifier($column_name) . ' ' . $sort_group->getOrder();
                     if ($this->query->isCount()) {
                         $group_columns[$column_name] = $column_name;
                     }
@@ -145,12 +154,12 @@
                     foreach ($this->query->getSortOrders() as $sort_order) {
                         $column_name = $this->query->getSelectionColumn($sort_order->getColumn());
                         if (!array_key_exists($column_name, $group_columns)) {
-                            $sort_order_column = Query::quoteIdentifier($column_name) . ' ';
+                            $sort_order_column = self::quoteIdentifier($column_name) . ' ';
                             $sort_orders[$sort_order_column] = $sort_order_column;
                         }
                     }
                     foreach ($this->query->getJoins() as $join) {
-                        $join_sort = Query::quoteIdentifier($join->getLeftColumn()) . ' ';
+                        $join_sort = self::quoteIdentifier($join->getLeftColumn()) . ' ';
                         if (!array_key_exists($join_sort, $sort_orders)) {
                             $sort_orders[$join_sort] = $join_sort;
                         }
@@ -162,7 +171,7 @@
             return $sql;
         }
 
-        protected function generateOrderByPartSql()
+        protected function generateOrderByPartSql(): string
         {
             $sql = '';
 
@@ -172,11 +181,11 @@
                     if (is_array($sort_order->getOrder())) {
                         $subsort_sql_parts = [];
                         foreach ($sort_order->getOrder() as $sort_elm) {
-                            $subsort_sql_parts[] = Query::quoteIdentifier($this->query->getSelectionColumn($sort_order->getColumn())) . '=' . $sort_elm;
+                            $subsort_sql_parts[] = self::quoteIdentifier($this->query->getSelectionColumn($sort_order->getColumn())) . '=' . $sort_elm;
                         }
                         $sql_parts[] = implode(',', $subsort_sql_parts);
                     } else {
-                        $sort_sql = Query::quoteIdentifier($this->query->getSelectionColumn($sort_order->getColumn()));
+                        $sort_sql = self::quoteIdentifier($this->query->getSelectionColumn($sort_order->getColumn()));
                         if (in_array($sort_order->getOrder(), array(QueryColumnSort::SORT_ASC_NUMERIC, QueryColumnSort::SORT_DESC_NUMERIC))) {
                             $sort_sql .= '+0 ' . substr($sort_order->getOrder(), 0, -8);
                         } else {
@@ -197,7 +206,7 @@
          * @param bool $strip
          * @return string
          */
-        protected function generateWhereSQL($strip = false)
+        protected function generateWhereSQL(bool $strip = false): string
         {
             $sql = $this->generateWherePartSql($strip);
             $sql .= $this->generateGroupPartSql();
@@ -222,12 +231,12 @@
          *
          * @return string
          */
-        protected function generateJoinSQL()
+        protected function generateJoinSQL(): string
         {
             $sql = ' FROM ' . $this->getTable()->getSelectFromSql();
             foreach ($this->query->getJoins() as $join) {
                 $sql .= ' ' . $join->getJoinType() . ' ' . $join->getTable()->getSelectFromSql();
-                $sql .= ' ON (' . Query::quoteIdentifier($join->getLeftColumn()) . Criterion::EQUALS . Query::quoteIdentifier($join->getRightColumn());
+                $sql .= ' ON (' . self::quoteIdentifier($join->getLeftColumn()) . Criterion::EQUALS . self::quoteIdentifier($join->getRightColumn());
 
                 if ($join->hasAdditionalCriteria()) {
                     $sql_parts = [];
@@ -240,7 +249,7 @@
                         }
                     }
 
-                    $sql .= ' AND ' . join(' AND ', $sql_parts);
+                    $sql .= ' AND ' . implode(' AND ', $sql_parts);
                 }
 
                 $sql .= ')';
@@ -252,7 +261,7 @@
         /**
          * Adds all select columns from all available tables in the query
          */
-        protected function addAllSelectColumns()
+        protected function addAllSelectColumns(): void
         {
             foreach ($this->getTable()->getAliasColumns() as $column) {
                 $this->query->addSelectionColumnRaw($column);
@@ -270,7 +279,7 @@
          *
          * @return string
          */
-        protected function generateSelectAllSQL()
+        protected function generateSelectAllSQL(): string
         {
             $sql_parts = [];
             foreach ($this->query->getSelectionColumns() as $selection) {
@@ -284,12 +293,12 @@
          *
          * @return string
          */
-        protected function generateSelectSQL()
+        protected function generateSelectSQL(): string
         {
             $sql = ($this->query->isDistinct()) ? 'SELECT DISTINCT ' : 'SELECT ';
 
             if ($this->query->isCustomSelection()) {
-                if ($this->query->isDistinct() && Core::getDriver() == Core::DRIVER_POSTGRES) {
+                if ($this->query->isDistinct() && Core::getDriver() === Core::DRIVER_POSTGRES) {
                     foreach ($this->query->getSortOrders() as $sort_order) {
                         $this->query->addSelectionColumn($sort_order->getColumn());
                     }
@@ -300,15 +309,17 @@
                     $alias = ($selection->getAlias()) ?? $this->query->getSelectionAlias($column);
                     $sub_sql = $selection->getVariableString();
                     if ($selection->isSpecial()) {
-                        $sub_sql .= mb_strtoupper($selection->getSpecial()) . '(' . Query::quoteIdentifier($selection->getColumn()) . ')';
-                        if ($selection->hasAdditional())
+                        $sub_sql .= mb_strtoupper($selection->getSpecial()) . '(' . self::quoteIdentifier($selection->getColumn()) . ')';
+                        if ($selection->hasAdditional()) {
                             $sub_sql .= ' ' . $selection->getAdditional() . ' ';
-                        if (mb_strpos($selection->getSpecial(), '(') !== false)
+                        }
+                        if (mb_strpos($selection->getSpecial(), '(') !== false) {
                             $sub_sql .= ')';
+                        }
                     } else {
-                        $sub_sql .= Query::quoteIdentifier($selection->getColumn());
+                        $sub_sql .= self::quoteIdentifier($selection->getColumn());
                     }
-                    $sub_sql .= ' AS ' . Query::quoteIdentifier($alias);
+                    $sub_sql .= ' AS ' . self::quoteIdentifier($alias);
                     $sql_parts[] = $sub_sql;
                 }
                 $sql .= implode(', ', $sql_parts);
@@ -323,10 +334,10 @@
         /**
          * Generate a "select" query
          *
-         * @param boolean $all [optional]
+         * @param bool $all [optional]
          * @return string
          */
-        public function getSelectSQL($all = false)
+        public function getSelectSQL(bool $all = false): string
         {
             if (!$this->query->getTable() instanceof Table) {
                 throw new Exception('Trying to generate sql when no table is being used.');
@@ -345,10 +356,10 @@
          *
          * @return string
          */
-        protected function generateCountSQL()
+        protected function generateCountSQL(): string
         {
             $sql = ($this->query->isDistinct()) ? 'SELECT COUNT(DISTINCT ' : 'SELECT COUNT(';
-            $sql .= Query::quoteIdentifier($this->query->getSelectionColumn($this->getTable()->getIdColumn()));
+            $sql .= self::quoteIdentifier($this->query->getSelectionColumn($this->getTable()->getIdColumn()));
             $sql .= ') as num_col';
 
             return $sql;
@@ -359,7 +370,7 @@
          *
          * @return string
          */
-        public function getCountSQL()
+        public function getCountSQL(): string
         {
             if (!$this->query->getTable() instanceof Table) {
                 throw new Exception('Trying to generate sql when no table is being used.');
@@ -377,18 +388,17 @@
          * @param Update $update
          * @return string
          */
-        protected function generateUpdateSQL(Update $update)
+        protected function generateUpdateSQL(Update $update): string
         {
             $updates = [];
             foreach ($update->getValues() as $column => $value) {
                 $column = mb_substr($column, mb_strpos($column, '.') + 1);
-                $prefix = Query::quoteIdentifier($column);
+                $prefix = self::quoteIdentifier($column);
                 $updates[] = $prefix . Criterion::EQUALS . '?';
 
                 $this->addValue($value, true);
             }
-            $sql = 'UPDATE ' . $this->getTable()->getSqlTableName() . ' SET ' . implode(', ', $updates);
-            return $sql;
+            return 'UPDATE ' . $this->getTable()->getSqlTableName() . ' SET ' . implode(', ', $updates);
         }
 
         /**
@@ -396,9 +406,8 @@
          *
          * @param Update $update
          * @return string
-         * @throws Exception
          */
-        public function getUpdateSQL(Update $update)
+        public function getUpdateSQL(Update $update): string
         {
             if (!$this->query->getTable() instanceof Table) {
                 throw new Exception('Trying to generate sql when no table is being used.');
@@ -416,7 +425,7 @@
          *
          * @return string
          */
-        public function getInsertSQL(Insertion $insertion)
+        public function getInsertSQL(Insertion $insertion): string
         {
             if (!$this->query->getTable() instanceof Table) {
                 throw new Exception('Trying to generate sql when no table is being used.');
@@ -428,7 +437,7 @@
 
             foreach ($insertion->getValues() as $column => $value) {
                 $column = mb_substr($column, mb_strpos($column, '.') + 1);
-                $inserts[] = Query::quoteIdentifier($column);
+                $inserts[] = self::quoteIdentifier($column);
 
                 if ($insertion->hasVariable($column)) {
                     $values[] = '@' . $insertion->getVariable($column);
@@ -441,9 +450,7 @@
             $inserts = implode(', ', $inserts);
             $values = implode(', ', $values);
 
-            $sql = "INSERT INTO {$table_name} ({$inserts}) VALUES ({$values})";
-
-            return $sql;
+            return "INSERT INTO $table_name ($inserts) VALUES ($values)";
         }
 
         /**
@@ -451,7 +458,7 @@
          *
          * @return string
          */
-        public function getDeleteSQL()
+        public function getDeleteSQL(): string
         {
             if (!$this->query->getTable() instanceof Table) {
                 throw new Exception('Trying to generate sql when no table is being used.');

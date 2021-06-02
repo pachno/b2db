@@ -6,32 +6,40 @@
      * Insertion wrapper class
      *
      * @package b2db
-     * @subpackage core
      */
     class Insertion
     {
 
         /**
-         * Parent table
+         * Criteria objects
          *
          * @var Criterion[]
          */
-        protected $criteria;
+        protected array $criteria;
 
-        protected $columns;
+        /**
+         * @var array<string, string>
+         */
+        protected array $columns;
 
-        protected $values;
-        
-        protected $variables;
+        /**
+         * @var array<string|int|bool>
+         */
+        protected array $values;
+
+        /**
+         * @var array<string, string>
+         */
+        protected array $variables;
 
         /**
          * Get added columns
          *
-         * @return mixed[]
+         * @return array<string, string>
          */
-        public function getColumns()
+        public function getColumns(): array
         {
-            if ($this->columns === null) {
+            if (!isset($this->columns)) {
                 $this->generateColumnsAndValues();
             }
             return $this->columns;
@@ -40,11 +48,11 @@
         /**
          * Get added values
          *
-         * @return mixed[]
+         * @return array<string|int|bool>
          */
-        public function getValues()
+        public function getValues(): array
         {
-            if ($this->values === null) {
+            if (!isset($this->values)) {
                 $this->generateColumnsAndValues();
             }
             return $this->values;
@@ -53,42 +61,49 @@
         /**
          * Get added variables
          *
-         * @return mixed[]
+         * @return array<string, string>
          */
-        public function getVariables()
+        public function getVariables(): array
         {
-            if ($this->variables === null) {
+            if (!isset($this->variables)) {
                 $this->generateColumnsAndValues();
             }
             return $this->variables;
         }
 
-        public function hasVariable($column)
+        public function hasVariable(string $column): bool
         {
             return array_key_exists($column, $this->variables);
         }
 
-        public function getVariable($column)
+        public function getVariable(string $column): string
         {
             return $this->variables[$column];
         }
 
-        protected function generateColumnsAndValues()
+        protected function generateColumnsAndValues(): void
         {
             $this->columns = [];
             $this->values = [];
             $this->variables = [];
 
             foreach ($this->criteria as $criterion) {
-                $this->columns[$criterion->getColumn()] = $criterion->getColumn();
-                $this->values[$criterion->getColumn()] = $criterion->getValue();
-                $this->variables[$criterion->getColumn()] = $criterion->getVariable();
+                $column = $criterion->getColumn();
+
+                $this->columns[$column] = $column;
+                $this->values[$column] = $criterion->getValue();
+                $this->variables[$column] = $criterion->getVariable();
             }
         }
 
-        public function add($column, $value, $variable = null)
+        /**
+         * @param string $column
+         * @param mixed $value
+         * @param ?string $variable
+         */
+        public function add(string $column, $value, string $variable = null): void
         {
-            $this->criteria[$column] = new Criterion($column, $value, null, $variable);
+            $this->criteria[$column] = new Criterion($column, $value, Criterion::EQUALS, $variable);
         }
 
     }
