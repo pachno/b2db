@@ -139,7 +139,7 @@
         }
 
         /**
-         * @return array<int, null>
+         * @return Join[]
          */
         public function getJoins(): array
         {
@@ -157,6 +157,16 @@
          * @param string|array<string, string> $column
          */
         public function getSelectionAlias($column): string
+        {
+            throw new Exception('This method is not implemented in the RawQuery class');
+        }
+
+        public function hasIndexBy(): bool
+        {
+            return false;
+        }
+
+        public function getIndexBy(): string
         {
             throw new Exception('This method is not implemented in the RawQuery class');
         }

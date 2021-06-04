@@ -1061,7 +1061,7 @@
 
         /**
          * @param string $classname
-         * @return ?array<string, string[]>
+         * @return ?array<string, array<string, int|string|bool>|string>
          */
         public static function getCachedTableDetails(string $classname): ?array
         {
@@ -1070,12 +1070,13 @@
                 if (!array_key_exists('id_column', self::$cached_entity_classes[$classname])) {
                     throw new Exception('Cannot find an id column for this table.');
                 }
-                return array('columns' => self::$cached_entity_classes[$classname]['columns'],
+                return [
+                    'columns' => self::$cached_entity_classes[$classname]['columns'],
                     'foreign_columns' => self::$cached_entity_classes[$classname]['foreign_columns'],
                     'id' => self::$cached_entity_classes[$classname]['id_column'],
                     'discriminator' => self::$cached_table_classes[self::$cached_entity_classes[$classname]['table']]['discriminator'],
                     'name' => self::$cached_table_classes[self::$cached_entity_classes[$classname]['table']]['name']
-                );
+                ];
             }
 
             return null;

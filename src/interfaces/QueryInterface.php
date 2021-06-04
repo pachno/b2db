@@ -17,7 +17,7 @@
         public function getSql(): string;
 
         /**
-         * @return array<string, mixed>
+         * @return array<int|string, mixed>
          */
         public function getValues(): array;
 
@@ -34,6 +34,10 @@
         public function isUpdate(): bool;
 
         public function getTable(): Table;
+
+        public function hasIndexBy(): bool;
+
+        public function getIndexBy(): string;
 
         /**
          * @return Join[]

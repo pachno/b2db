@@ -152,7 +152,7 @@
         /**
          * Get added values
          *
-         * @return array<int, mixed>
+         * @return array<int|string, mixed>
          */
         public function getValues(): array
         {
@@ -228,10 +228,10 @@
             }
 
             $column = $this->getSelectionColumn($column);
-            $alias = ($alias === '') ? str_replace('.', '_', $column) : $alias;
+            $select_alias = ($alias === '') ? str_replace('.', '_', $column) : $alias;
 
             $this->is_custom_selection = true;
-            $this->addSelectionColumnRaw($column, $alias, $special, $variable, $additional);
+            $this->addSelectionColumnRaw($column, $select_alias, $special, $variable, $additional);
 
             return $this;
         }
@@ -747,7 +747,9 @@
             if (is_array($join)) {
                 foreach ($join as $join_column) {
                     $foreign_table = $this->table->getForeignTableByLocalColumn($join_column);
-                    $this->join($foreign_table->getTable(), $foreign_table->getKeyColumnName(), $this->table->getB2dbAlias() . '.' . $foreign_table->getColumnName());
+                    if ($foreign_table instanceof ForeignTable) {
+                        $this->join($foreign_table->getTable(), $foreign_table->getKeyColumnName(), $this->table->getB2dbAlias() . '.' . $foreign_table->getColumnName());
+                    }
                 }
             } elseif ($join === 'all') {
                 foreach ($this->table->getForeignTables() as $foreign_table) {
