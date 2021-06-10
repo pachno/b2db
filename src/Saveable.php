@@ -195,7 +195,7 @@
             return $this->$property_name;
         }
 
-        public function getB2dbID(): int
+        public function getB2dbID(): ?int
         {
             $column = self::getB2dbTable()->getIdColumn();
             $property = explode('.', $column);

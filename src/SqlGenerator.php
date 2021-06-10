@@ -143,7 +143,7 @@
                 $groups = [];
                 foreach ($this->query->getSortGroups() as $sort_group) {
                     $column_name = $this->query->getSelectionColumn($sort_group->getColumn());
-                    $groups[] = self::quoteIdentifier($column_name) . ' ' . $sort_group->getOrder();
+                    $groups[] = self::quoteIdentifier($column_name); // . ' ' . $sort_group->getOrder();
                     if ($this->query->isCount()) {
                         $group_columns[$column_name] = $column_name;
                     }

@@ -100,27 +100,27 @@
 
         public function isCount(): bool
         {
-            return ($this->action === QueryInterface::ACTION_COUNT);
+            return ($this->getAction() === QueryInterface::ACTION_COUNT);
         }
 
         public function isSelect(): bool
         {
-            return ($this->action === QueryInterface::ACTION_SELECT);
+            return ($this->getAction() === QueryInterface::ACTION_SELECT);
         }
 
         public function isDelete(): bool
         {
-            return ($this->action === QueryInterface::ACTION_DELETE);
+            return ($this->getAction() === QueryInterface::ACTION_DELETE);
         }
 
         public function isInsert(): bool
         {
-            return ($this->action === QueryInterface::ACTION_INSERT);
+            return ($this->getAction() === QueryInterface::ACTION_INSERT);
         }
 
         public function isUpdate(): bool
         {
-            return ($this->action === QueryInterface::ACTION_UPDATE);
+            return ($this->getAction() === QueryInterface::ACTION_UPDATE);
         }
 
         /**
