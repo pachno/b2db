@@ -1094,7 +1094,8 @@
                 $saveable_class = '\\'.get_class($class);
                 $table_details = ($item_class) ? Core::getCachedTableDetails($item_class) : Core::getTableDetails($relation_details['joinclass']);
                 if ($relation_details['orderby']) {
-                    $query->addOrderBy("{$table_details['name']}." . $relation_details['orderby']);
+                    $order = $relation_details['sort_order'] ?? QueryColumnSort::SORT_ASC;
+                    $query->addOrderBy("{$table_details['name']}." . $relation_details['orderby'], $order);
                 }
                 $query->where("{$table_details['name']}." . $relation_details['foreign_column'], $class->getB2dbSaveablePropertyValue(Core::getCachedColumnPropertyName($saveable_class, $foreign_table->getIdColumn())));
                 if (array_key_exists('discriminator', $table_details) && $table_details['discriminator'] && array_key_exists($saveable_class, $table_details['discriminator']['discriminators'])) {
