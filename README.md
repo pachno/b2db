@@ -1,7 +1,6 @@
-B2DB PHP ORM
+B2db PHP ORM
 ============
-
-B2db is a lightweight ORM and DBAL for modern PHP applications (7.1 or newer), that works MySQL, MariaDB, Postgres 
+B2db is a lightweight ORM and DBAL for modern PHP applications (7.4 or newer), that works MySQL, MariaDB, Postgres
 and Microsoft SQL server.
 
 B2db uses a Data Mapper pattern implementing Active Records. Read more about the architecture in [b2db architecture](docs/architecture.md) 
