@@ -126,7 +126,7 @@
          */
         public function and($column, $value = '', string $operator = Criterion::EQUALS, string $variable = null, string $additional = null, string $special = null): self
         {
-            if ($this->mode === Query::MODE_OR) {
+            if (isset($this->mode) && $this->mode === Query::MODE_OR) {
                 throw new Exception('Cannot combine two selection types (AND/OR) in the same Criteria. Use multiple sub-criteria instead');
             }
 
