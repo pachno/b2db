@@ -537,11 +537,11 @@
         /**
          * Return the database port
          *
-         * @return int
+         * @return ?int
          */
-        public static function getPort(): int
+        public static function getPort(): ?int
         {
-            return self::$port;
+            return self::$port ?? null;
         }
 
         /**
@@ -942,14 +942,14 @@
                             'property' => $property_name,
                             'name' => $column_name,
                             'type' => $column_annotation->getProperty('type'),
-                            'not_null' => $column_annotation->getProperty('not_null', false)
+                            'not_null' => (bool) $column_annotation->getProperty('not_null', false)
                         ];
 
                         if ($column_annotation->hasProperty('default_value')) {
                             $column['default_value'] = $column_annotation->getProperty('default_value');
                         }
                         if ($column_annotation->hasProperty('length')) {
-                            $column['length'] = $column_annotation->getProperty('length');
+                            $column['length'] = (int) $column_annotation->getProperty('length');
                         }
 
                         switch ($column['type']) {
@@ -962,10 +962,10 @@
                                 break;
                             /** @noinspection PhpMissingBreakStatementInspection */
                             case 'float':
-                                $column['precision'] = $column_annotation->getProperty('precision', 2);
+                                $column['precision'] = (int) $column_annotation->getProperty('precision', 2);
                             case 'integer':
-                                $column['auto_inc'] = $column_annotation->getProperty('auto_increment', false);
-                                $column['unsigned'] = $column_annotation->getProperty('unsigned', false);
+                                $column['auto_inc'] = (bool) $column_annotation->getProperty('auto_increment', false);
+                                $column['unsigned'] = (bool) $column_annotation->getProperty('unsigned', false);
                                 if (!isset($column['length'])) {
                                     $column['length'] = 10;
                                 }
