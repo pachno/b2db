@@ -141,7 +141,7 @@
          */
         public static function getDebugTime(): int
         {
-            return array_sum(explode(' ', microtime()));
+            return array_sum(explode(' ', (int) microtime()));
         }
 
         public static function isDebugLoggingEnabled(): bool

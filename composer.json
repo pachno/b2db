@@ -13,11 +13,13 @@
         "MPL-2.0"
     ],
     "require" : {
-        "php" : ">=7.4.0",
+        "php" : "^7.4|^8.0|^8.1",
         "ext-Reflection" : "*",
         "ext-mbstring" : "*",
-        "ext-pdo" : "*",
-        "ext-apcu": "*"
+        "ext-pdo" : "*"
+    },
+    "suggest": {
+        "ext-apcu": "APCu extension to allow apc caching"
     },
     "autoload" : {
         "psr-4" : {
