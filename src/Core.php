@@ -508,7 +508,7 @@
          */
         public static function getDSN(): string
         {
-            if (self::$dsn === null) {
+            if (!isset(self::$dsn) || self::$dsn === null) {
                 self::generateDSN();
             }
             return self::$dsn;
