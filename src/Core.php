@@ -82,7 +82,7 @@
          */
         protected static array $tables = [];
 
-        protected static bool $debug_mode = true;
+        protected static bool $debug_mode = false;
 
         protected static ?bool $debug_logging;
 
@@ -531,7 +531,7 @@
          */
         public static function getHostname(): string
         {
-            return self::$hostname;
+            return self::$hostname ?? '';
         }
 
         /**
@@ -571,7 +571,7 @@
          */
         public static function getUsername(): string
         {
-            return self::$username;
+            return self::$username ?? '';
         }
 
         /**
@@ -611,7 +611,7 @@
          */
         public static function getPassword(): string
         {
-            return self::$password;
+            return self::$password ?? '';
         }
 
         /**
@@ -632,7 +632,7 @@
          */
         public static function getDatabaseName(): string
         {
-            return self::$database_name;
+            return self::$database_name ?? '';
         }
 
         /**
@@ -655,7 +655,7 @@
          */
         public static function getDriver(): string
         {
-            return self::$driver;
+            return self::$driver ?? '';
         }
 
         public static function hasDriver(): bool
@@ -689,8 +689,6 @@
                 }
             } catch (PDOException $e) {
                 throw new Exception("Could not connect to the database [" . $e->getMessage() . "], dsn: ".self::getDSN());
-            } catch (Exception $e) {
-                throw $e;
             }
         }
 
@@ -719,8 +717,8 @@
          *
          * @param string $strategy
          *
-         * @see self::CACHE_TYPE_INTERNAL
-         * @see self::CACHE_TYPE_MEMCACHED
+         * @see CACHE_TYPE_INTERNAL
+         * @see CACHE_TYPE_MEMCACHED
          */
         public static function setCacheEntitiesStrategy(string $strategy): void
         {
@@ -732,8 +730,8 @@
          *
          * @return string
          *
-         * @see self::CACHE_TYPE_INTERNAL
-         * @see self::CACHE_TYPE_MEMCACHED
+         * @see CACHE_TYPE_INTERNAL
+         * @see CACHE_TYPE_MEMCACHED
          */
         public static function getCacheEntitiesStrategy(): string
         {
