@@ -81,7 +81,7 @@
             return $this->statement->getQuery();
         }
 
-        public function offsetExists($offset): bool
+        public function offsetExists(mixed $offset): bool
         {
             if (strpos($offset, '.') === false) {
                 return array_key_exists($offset, $this->fields);
@@ -91,17 +91,17 @@
             return array_key_exists($this->statement->getQuery()->getSelectionAlias($column), $this->fields);
         }
 
-        public function offsetGet($offset)
+        public function offsetGet(mixed $offset): mixed
         {
             return $this->get($offset);
         }
 
-        public function offsetSet($offset, $value): void
+        public function offsetSet(mixed $offset, mixed $value): void
         {
             throw new \Exception('Not supported');
         }
 
-        public function offsetUnset($offset): void
+        public function offsetUnset(mixed $offset): void
         {
             throw new \Exception('Not supported');
         }
