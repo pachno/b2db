@@ -33,7 +33,7 @@
          *
          * @var ?PDO
          */
-        protected static ?PDO $db_connection;
+        protected static ?PDO $db_connection = null;
 
         protected static string $hostname;
 
